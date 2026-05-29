@@ -35,6 +35,9 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest req) {
+        if (req.getEmail() == null && req.getPhone() == null) {
+            throw new AuthException("email or phone is required");
+        }
         if (req.getEmail() != null && userRepo.existsByEmail(req.getEmail())) {
             throw new AuthException("email already registered");
         }
@@ -123,6 +126,9 @@ public class AuthService {
 
     @Transactional
     public void setPassword(UUID userId, String password) {
+        if (password == null || password.length() < 6) {
+            throw new AuthException("password must be at least 6 characters");
+        }
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new AuthException("user not found"));
         user.setPasswordHash(passwordEncoder.encode(password));

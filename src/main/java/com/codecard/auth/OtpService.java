@@ -37,7 +37,13 @@ public class OtpService {
                     }
                 });
 
-        String code = String.format("%06d", random.nextInt(1_000_000));
+        String code = String.format("%06d", random.nextInt(900_000) + 100_000);
+
+        if (EMAIL_PATTERN.matcher(target).matches()) {
+            sendEmail(target, code, purpose);
+        } else {
+            log.info("OTP for {}: {} (SMS not yet implemented)", target, code);
+        }
 
         OtpCode otp = new OtpCode();
         otp.setTarget(target);
@@ -46,12 +52,6 @@ public class OtpService {
         otp.setExpiresAt(Instant.now().plus(10, ChronoUnit.MINUTES));
         otp.setUsed(false);
         otpRepo.save(otp);
-
-        if (EMAIL_PATTERN.matcher(target).matches()) {
-            sendEmail(target, code, purpose);
-        } else {
-            log.info("OTP for {}: {} (SMS not yet implemented)", target, code);
-        }
     }
 
     @Transactional
