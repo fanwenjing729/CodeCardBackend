@@ -9,10 +9,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 public class AuthService {
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w.-]+@[\\w.-]+\\.\\w{2,}$");
 
     private final UserRepository userRepo;
     private final RefreshTokenRepository refreshTokenRepo;
@@ -58,9 +62,24 @@ public class AuthService {
                     .orElseThrow(() -> new AuthException("invalid credentials"));
         }
 
+        // 检查账户是否被锁定
+        if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(Instant.now())) {
+            throw new AuthException("account temporarily locked, try again later");
+        }
+
         if (user.getPasswordHash() == null || !passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
+            user.setLoginFailures(user.getLoginFailures() + 1);
+            if (user.getLoginFailures() >= 5) {
+                user.setLockedUntil(Instant.now().plus(15, ChronoUnit.MINUTES));
+            }
+            userRepo.save(user);
             throw new AuthException("invalid credentials");
         }
+
+        // 登录成功，重置失败计数
+        user.setLoginFailures(0);
+        user.setLockedUntil(null);
+        userRepo.save(user);
 
         return buildAuthResponse(user, false);
     }
@@ -77,7 +96,11 @@ public class AuthService {
 
         // Find or create user
         User user;
-        if (req.getTarget().contains("@")) {
+        boolean isEmail = isEmail(req.getTarget());
+        if (!isEmail && !req.getTarget().matches("^\\+?\\d{7,15}$")) {
+            throw new AuthException("invalid phone number format");
+        }
+        if (isEmail) {
             user = userRepo.findByEmail(req.getTarget()).orElse(null);
         } else {
             user = userRepo.findByPhone(req.getTarget()).orElse(null);
@@ -86,7 +109,7 @@ public class AuthService {
         boolean isNewUser = false;
         if (user == null) {
             user = new User();
-            if (req.getTarget().contains("@")) {
+            if (isEmail) {
                 user.setEmail(req.getTarget());
             } else {
                 user.setPhone(req.getTarget());
@@ -179,6 +202,10 @@ public class AuthService {
         resp.setRefreshToken(refreshToken);
         resp.setIsNewUser(isNewUser);
         return resp;
+    }
+
+    private boolean isEmail(String target) {
+        return EMAIL_PATTERN.matcher(target).matches();
     }
 
     private AuthResponse.UserProfile toProfile(User user) {

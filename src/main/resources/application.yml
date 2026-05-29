@@ -29,6 +29,11 @@ jwt:
   access-expiration-ms: 900000
   refresh-expiration-ms: 2592000000
 
+cors:
+  allowed-origins:
+    - http://localhost:8081
+    - http://localhost:19006
+
 server:
   port: ${PORT:8080}
 

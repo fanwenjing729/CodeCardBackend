@@ -8,7 +8,7 @@ public class RegisterRequest {
     private String email;
     private String phone;
 
-    @Size(min = 6, message = "password must be at least 6 characters")
+    @Size(min = 8, message = "password must be at least 8 characters")
     private String password;
 
     @AssertTrue(message = "email or phone is required")

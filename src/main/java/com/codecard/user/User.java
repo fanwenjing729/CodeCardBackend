@@ -33,6 +33,12 @@ public class User {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @Column(name = "login_failures")
+    private int loginFailures;
+
+    @Column(name = "locked_until")
+    private Instant lockedUntil;
+
     @PrePersist
     void onCreate() {
         createdAt = Instant.now();
@@ -64,4 +70,10 @@ public class User {
 
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+
+    public int getLoginFailures() { return loginFailures; }
+    public void setLoginFailures(int loginFailures) { this.loginFailures = loginFailures; }
+
+    public Instant getLockedUntil() { return lockedUntil; }
+    public void setLockedUntil(Instant lockedUntil) { this.lockedUntil = lockedUntil; }
 }

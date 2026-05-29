@@ -10,11 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.regex.Pattern;
 
 @Service
 public class OtpService {
 
     private static final Logger log = LoggerFactory.getLogger(OtpService.class);
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w.-]+@[\\w.-]+\\.\\w{2,}$");
 
     private final OtpCodeRepository otpRepo;
     private final JavaMailSender mailSender;
@@ -45,7 +47,7 @@ public class OtpService {
         otp.setUsed(false);
         otpRepo.save(otp);
 
-        if (target.contains("@")) {
+        if (EMAIL_PATTERN.matcher(target).matches()) {
             sendEmail(target, code, purpose);
         } else {
             log.info("OTP for {}: {} (SMS not yet implemented)", target, code);

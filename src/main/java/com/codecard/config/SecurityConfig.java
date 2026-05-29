@@ -2,6 +2,7 @@ package com.codecard.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -40,6 +41,13 @@ public class SecurityConfig {
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     objectMapper.writeValue(response.getOutputStream(),
                             Map.of("error", "authentication required"));
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    objectMapper.writeValue(response.getOutputStream(),
+                            Map.of("error", "access denied", "traceId",
+                                    MDC.get("traceId") != null ? MDC.get("traceId") : "?"));
                 })
             )
             .authorizeHttpRequests(auth -> auth

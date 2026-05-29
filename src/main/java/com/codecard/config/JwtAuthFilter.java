@@ -1,5 +1,6 @@
 package com.codecard.config;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,25 +37,25 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String token = header.substring(7);
+        Claims claims;
         try {
-            if (!jwtService.isTokenValid(token)) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            // 拒绝 refresh token 当作 access token 使用
-            if ("refresh".equals(jwtService.extractType(token))) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            String userId = jwtService.extractUserIdStr(token);
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            claims = jwtService.parseToken(token);
         } catch (Exception e) {
-            log.warn("JWT authentication failed: {}", e.getMessage());
+            log.warn("JWT parsing failed: {}", e.getMessage());
+            filterChain.doFilter(request, response);
+            return;
         }
+
+        // 拒绝 refresh token 当作 access token 使用
+        if ("refresh".equals(jwtService.extractType(claims))) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String userId = jwtService.extractUserIdStr(claims);
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
         filterChain.doFilter(request, response);
     }

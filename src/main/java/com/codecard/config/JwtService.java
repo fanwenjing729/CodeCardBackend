@@ -23,6 +23,10 @@ public class JwtService {
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-expiration-ms}") long accessExpirationMs,
             @Value("${jwt.refresh-expiration-ms}") long refreshExpirationMs) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT_SECRET is not configured. Generate one with: openssl rand -base64 64");
+        }
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
         this.accessExpirationMs = accessExpirationMs;
         this.refreshExpirationMs = refreshExpirationMs;
@@ -52,21 +56,36 @@ public class JwtService {
                 .compact();
     }
 
+    public Claims parseToken(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
     public UUID extractUserId(String token) {
-        String sub = extractClaims(token).getSubject();
-        return UUID.fromString(sub);
+        return UUID.fromString(parseToken(token).getSubject());
+    }
+
+    public String extractUserIdStr(Claims claims) {
+        return claims.getSubject();
     }
 
     public String extractUserIdStr(String token) {
-        return extractClaims(token).getSubject();
+        return parseToken(token).getSubject();
     }
 
     public String extractJid(String token) {
-        return extractClaims(token).getId();
+        return parseToken(token).getId();
+    }
+
+    public String extractType(Claims claims) {
+        return claims.get("type", String.class);
     }
 
     public String extractType(String token) {
-        return extractClaims(token).get("type", String.class);
+        return parseToken(token).get("type", String.class);
     }
 
     public long getRefreshExpirationMs() {
@@ -75,18 +94,10 @@ public class JwtService {
 
     public boolean isTokenValid(String token) {
         try {
-            extractClaims(token);
+            parseToken(token);
             return true;
         } catch (Exception e) {
             return false;
         }
-    }
-
-    private Claims extractClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
     }
 }
