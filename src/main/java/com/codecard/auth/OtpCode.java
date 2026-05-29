@@ -1,4 +1,4 @@
-package com.codecard.otp;
+package com.codecard.auth;
 
 import jakarta.persistence.*;
 import java.time.Instant;

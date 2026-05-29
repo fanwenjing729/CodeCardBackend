@@ -1,12 +1,11 @@
 package com.codecard.auth;
 
-import com.codecard.otp.OtpCode;
-import com.codecard.otp.OtpCodeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -26,12 +25,13 @@ public class OtpService {
         this.mailSender = mailSender;
     }
 
+    @Transactional
     public void sendCode(String target, String purpose) {
-        // 频率限制：同一 target+purpose 60 秒内只能发一次
+        // Rate limit: same target+purpose cannot send another OTP within 60 seconds
         otpRepo.findTopByTargetAndPurposeAndUsedFalseOrderByCreatedAtDesc(target, purpose)
                 .ifPresent(recent -> {
                     if (recent.getCreatedAt().plusSeconds(60).isAfter(Instant.now())) {
-                        throw new AuthService.AuthException("please wait before requesting another code");
+                        throw new AuthException("please wait before requesting another code");
                     }
                 });
 
@@ -52,6 +52,7 @@ public class OtpService {
         }
     }
 
+    @Transactional
     public boolean verifyCode(String target, String code, String purpose) {
         return otpRepo.findTopByTargetAndPurposeAndUsedFalseOrderByCreatedAtDesc(target, purpose)
                 .map(otp -> {

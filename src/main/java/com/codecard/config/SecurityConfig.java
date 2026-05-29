@@ -19,10 +19,12 @@ import java.util.Map;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final TraceIdFilter traceIdFilter;
     private final JwtAuthFilter jwtAuthFilter;
     private final ObjectMapper objectMapper;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter, ObjectMapper objectMapper) {
+    public SecurityConfig(TraceIdFilter traceIdFilter, JwtAuthFilter jwtAuthFilter, ObjectMapper objectMapper) {
+        this.traceIdFilter = traceIdFilter;
         this.jwtAuthFilter = jwtAuthFilter;
         this.objectMapper = objectMapper;
     }
@@ -50,6 +52,7 @@ public class SecurityConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(traceIdFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

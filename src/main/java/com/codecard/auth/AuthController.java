@@ -66,11 +66,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, Object>> logout(
-            @AuthenticationPrincipal String userId,
-            @RequestBody(required = false) Map<String, String> body) {
-        String refreshToken = body != null ? body.get("refreshToken") : null;
-        authService.logout(refreshToken);
+    public ResponseEntity<Map<String, Object>> logout(@AuthenticationPrincipal String userId) {
+        authService.logout(UUID.fromString(userId));
         return ResponseEntity.ok(Map.of("ok", true));
     }
 }

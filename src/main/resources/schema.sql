@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_otp_target ON otp_codes(target, purpose);
 -- ========= USER PROGRESS =========
 CREATE TABLE IF NOT EXISTS user_progress (
     user_id     UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    data        JSONB NOT NULL DEFAULT '{}',
+    data        JSON NOT NULL DEFAULT '{}',
     version     INTEGER NOT NULL DEFAULT 3,
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );

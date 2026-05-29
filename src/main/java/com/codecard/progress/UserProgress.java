@@ -1,7 +1,11 @@
 package com.codecard.progress;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -13,8 +17,9 @@ public class UserProgress {
     @Column(name = "user_id")
     private UUID userId;
 
-    @Column(columnDefinition = "jsonb", nullable = false)
-    private String data;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "data", columnDefinition = "json", nullable = false)
+    private Map<String, Object> data = new HashMap<>();
 
     @Column(nullable = false)
     private int version;
@@ -37,8 +42,8 @@ public class UserProgress {
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
 
-    public String getData() { return data; }
-    public void setData(String data) { this.data = data; }
+    public Map<String, Object> getData() { return data; }
+    public void setData(Map<String, Object> data) { this.data = data; }
 
     public int getVersion() { return version; }
     public void setVersion(int version) { this.version = version; }

@@ -47,6 +47,7 @@ public class AuthService {
         return buildAuthResponse(user, true);
     }
 
+    @Transactional
     public AuthResponse login(LoginRequest req) {
         User user;
         if (req.getEmail() != null) {
@@ -111,6 +112,10 @@ public class AuthService {
             throw new AuthException("invalid refresh token");
         }
 
+        if (!"refresh".equals(jwtService.extractType(refreshTokenStr))) {
+            throw new AuthException("invalid refresh token");
+        }
+
         String jid = jwtService.extractJid(refreshTokenStr);
         RefreshToken saved = refreshTokenRepo.findByTokenJid(jid)
                 .orElseThrow(() -> new AuthException("token revoked"));
@@ -151,14 +156,14 @@ public class AuthService {
     }
 
     @Transactional
-    public void logout(String refreshTokenStr) {
-        if (refreshTokenStr != null && jwtService.isTokenValid(refreshTokenStr)) {
-            String jid = jwtService.extractJid(refreshTokenStr);
-            refreshTokenRepo.findByTokenJid(jid).ifPresent(refreshTokenRepo::delete);
-        }
+    public void logout(UUID userId) {
+        refreshTokenRepo.deleteByUserId(userId);
     }
 
     private AuthResponse buildAuthResponse(User user, boolean isNewUser) {
+        // Clean up expired tokens for this user
+        refreshTokenRepo.deleteExpiredByUserId(user.getId(), Instant.now());
+
         String accessToken = jwtService.generateAccessToken(user.getId());
         String refreshToken = jwtService.generateRefreshToken(user.getId());
 
@@ -184,11 +189,5 @@ public class AuthService {
         profile.setDisplayId(user.getDisplayId());
         profile.setAvatarUrl(user.getAvatarUrl());
         return profile;
-    }
-
-    public static class AuthException extends RuntimeException {
-        public AuthException(String message) {
-            super(message);
-        }
     }
 }

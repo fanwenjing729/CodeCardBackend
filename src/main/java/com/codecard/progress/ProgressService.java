@@ -2,8 +2,6 @@ package com.codecard.progress;
 
 import com.codecard.progress.dto.ProgressSyncRequest;
 import com.codecard.progress.dto.ProgressSyncResponse;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,11 +13,9 @@ import java.util.UUID;
 public class ProgressService {
 
     private final UserProgressRepository progressRepo;
-    private final ObjectMapper mapper;
 
-    public ProgressService(UserProgressRepository progressRepo, ObjectMapper mapper) {
+    public ProgressService(UserProgressRepository progressRepo) {
         this.progressRepo = progressRepo;
-        this.mapper = mapper;
     }
 
     public ProgressSyncResponse getProgress(UUID userId) {
@@ -32,12 +28,7 @@ public class ProgressService {
     public ProgressSyncResponse upsertProgress(UUID userId, ProgressSyncRequest req) {
         UserProgress progress = progressRepo.findById(userId).orElse(new UserProgress());
         progress.setUserId(userId);
-
-        try {
-            progress.setData(mapper.writeValueAsString(req.getData()));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("failed to serialize progress data", e);
-        }
+        progress.setData(req.getData());
         progress.setVersion(req.getVersion());
         progress.setUpdatedAt(Instant.now());
         progressRepo.save(progress);
@@ -62,14 +53,10 @@ public class ProgressService {
                 });
     }
 
-    @SuppressWarnings("unchecked")
     private ProgressSyncResponse toResponse(UserProgress progress) {
         ProgressSyncResponse resp = new ProgressSyncResponse();
-        try {
-            resp.setData(mapper.readValue(progress.getData(), Map.class));
-        } catch (JsonProcessingException e) {
-            resp.setData(Map.of());
-        }
+        Map<String, Object> data = progress.getData();
+        resp.setData(data != null ? data : Map.of());
         resp.setVersion(progress.getVersion());
         resp.setUpdatedAt(progress.getUpdatedAt());
         resp.setMerged(false);
