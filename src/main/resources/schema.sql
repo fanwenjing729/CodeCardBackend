@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash   VARCHAR(255),
     display_id      VARCHAR(64),
     avatar_url      TEXT,
+    login_failures  INTEGER NOT NULL DEFAULT 0,
+    locked_until    TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );

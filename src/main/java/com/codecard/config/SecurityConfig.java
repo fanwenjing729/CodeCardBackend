@@ -66,7 +66,11 @@ public class SecurityConfig {
                     "/api/v1/auth/login",
                     "/api/v1/auth/send-otp",
                     "/api/v1/auth/verify-otp",
-                    "/api/v1/auth/refresh"
+                    "/api/v1/auth/refresh",
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/api-docs/**",
+                    "/v3/api-docs/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             )

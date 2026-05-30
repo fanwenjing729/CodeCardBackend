@@ -9,6 +9,7 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true
@@ -25,7 +26,7 @@ spring:
             enable: true
 
 jwt:
-  secret: ${JWT_SECRET:}
+  secret: ${JWT_SECRET:ZGV2LWp3dC1zZWNyZXQtZm9yLWxvY2FsLWRldi1vbmx5LW5vdC1mb3ItcHJvZHVjdGlvbg==}
   access-expiration-ms: 900000
   refresh-expiration-ms: 2592000000
 
@@ -64,3 +65,9 @@ rate-limit:
     - path: /api/v1/auth/verify-otp
       limit: 5
       duration-seconds: 60
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
