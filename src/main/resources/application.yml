@@ -42,3 +42,25 @@ management:
     web:
       exposure:
         include: health
+
+logging:
+  pattern:
+    console: '{"ts":"%d{ISO8601}","level":"%level","traceId":"%X{traceId:-}","logger":"%logger{36}","msg":"%msg"}%n'
+  level:
+    com.codecard: INFO
+
+rate-limit:
+  enabled: true
+  paths:
+    - path: /api/v1/auth/login
+      limit: 10
+      duration-seconds: 60
+    - path: /api/v1/auth/register
+      limit: 3
+      duration-seconds: 60
+    - path: /api/v1/auth/send-otp
+      limit: 3
+      duration-seconds: 60
+    - path: /api/v1/auth/verify-otp
+      limit: 5
+      duration-seconds: 60
