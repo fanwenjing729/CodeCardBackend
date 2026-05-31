@@ -1,19 +1,22 @@
+# profile: local
+# 切换方式: SPRING_PROFILES_ACTIVE=local
+# 前提: 本地 PostgreSQL 已运行，已执行 schema.sql
+
 spring:
-  sql:
-    init:
-      mode: never
   datasource:
-    url: jdbc:h2:mem:codecard-local
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:postgresql://localhost:5432/codecard
+    username: codecard
+    password: codecard
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    database-platform: org.hibernate.dialect.H2Dialect
+      ddl-auto: validate
+    show-sql: true
   mail:
     host: localhost
     port: 25
 
+rate-limit:
+  enabled: false
+
 jwt:
-  secret: dGVzdC1zZWNyZXQta2V5LWZvci1sb2NhbC1kZXYtbWluaW11bS0yNTYtYml0cw==
+  secret: ZGV2LWp3dC1zZWNyZXQtZm9yLWxvY2FsLWRldi1vbmx5LW5vdC1mb3ItcHJvZHVjdGlvbg==

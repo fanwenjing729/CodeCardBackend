@@ -25,14 +25,16 @@ import java.util.Map;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final RateLimitFilter rateLimitFilter;
     private final TraceIdFilter traceIdFilter;
     private final JwtAuthFilter jwtAuthFilter;
     private final ObjectMapper objectMapper;
     private final List<String> allowedOrigins;
 
-    public SecurityConfig(TraceIdFilter traceIdFilter, JwtAuthFilter jwtAuthFilter,
-                          ObjectMapper objectMapper,
+    public SecurityConfig(RateLimitFilter rateLimitFilter, TraceIdFilter traceIdFilter,
+                          JwtAuthFilter jwtAuthFilter, ObjectMapper objectMapper,
                           @Value("${cors.allowed-origins:#{null}}") List<String> allowedOrigins) {
+        this.rateLimitFilter = rateLimitFilter;
         this.traceIdFilter = traceIdFilter;
         this.jwtAuthFilter = jwtAuthFilter;
         this.objectMapper = objectMapper;
@@ -70,10 +72,12 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/swagger-ui/**",
                     "/api-docs/**",
-                    "/v3/api-docs/**"
+                    "/v3/api-docs/**",
+                    "/actuator/health"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(traceIdFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
