@@ -19,4 +19,4 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - run: mvn test
+      - run: mvn -s .github/maven-settings.xml test
