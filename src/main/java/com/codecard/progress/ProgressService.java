@@ -40,14 +40,35 @@ public class ProgressService {
     public ProgressSyncResponse syncProgress(UUID userId, ProgressSyncRequest req) {
         return progressRepo.findById(userId)
                 .map(remote -> {
-                    // Return remote data; client handles the merge
+                    if (req.getVersion() > remote.getVersion()) {
+                        // Client has newer data — overwrite
+                        remote.setData(req.getData());
+                        remote.setVersion(req.getVersion());
+                        remote.setUpdatedAt(Instant.now());
+                        progressRepo.save(remote);
+                        ProgressSyncResponse resp = toResponse(remote);
+                        resp.setMerged(false);
+                        return resp;
+                    } else if (req.getVersion() < remote.getVersion()) {
+                        // Server has newer data — return server version for client merge
+                        ProgressSyncResponse resp = toResponse(remote);
+                        resp.setMerged(true);
+                        return resp;
+                    }
+                    // Same version — no conflict
                     ProgressSyncResponse resp = toResponse(remote);
-                    resp.setMerged(true);
+                    resp.setMerged(false);
                     return resp;
                 })
                 .orElseGet(() -> {
                     // No remote data — save client data
-                    ProgressSyncResponse resp = upsertProgress(userId, req);
+                    UserProgress progress = new UserProgress();
+                    progress.setUserId(userId);
+                    progress.setData(req.getData());
+                    progress.setVersion(req.getVersion());
+                    progress.setUpdatedAt(Instant.now());
+                    progressRepo.save(progress);
+                    ProgressSyncResponse resp = toResponse(progress);
                     resp.setMerged(false);
                     return resp;
                 });

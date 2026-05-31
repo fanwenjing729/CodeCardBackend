@@ -110,9 +110,10 @@ class ProgressIntegrationTest {
     @Test
     @Order(3)
     void syncProgress_hasRemoteData_shouldReturnRemoteWithMergedTrue() {
+        // Client version (2) < server version (3) → server wins, merged=true
         ProgressSyncRequest req = new ProgressSyncRequest();
         req.setData(Map.of("course3", Map.of("xp", 999)));
-        req.setVersion(4);
+        req.setVersion(2);
 
         ResponseEntity<ProgressSyncResponse> resp = restTemplate.postForEntity(
                 url("/progress/sync"), new HttpEntity<>(req, authHeaders()), ProgressSyncResponse.class);
